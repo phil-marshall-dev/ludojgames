@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useFormInput } from '../hooks';
-import { IRegisterCredentials } from '../models';
+import { IRegisterCredentials } from '../types';
 import { Form, useActionData } from 'react-router-dom';
 
 interface RegisterActionData {
@@ -30,14 +30,14 @@ const RegisterForm = () => {
       </div>
       <div className="mb-3">
         <label htmlFor="formBasicEmail" className="form-label">
-          Email address
+          Email address (optional)
         </label>
         <input
           type="email"
           className="form-control"
           id="formBasicEmail"
           name="email"
-          placeholder="Email address"
+          placeholder="Email address (optional)"
         />
       </div>
       <div className="mb-3">

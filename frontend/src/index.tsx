@@ -1,10 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'bootswatch/dist/spacelab/bootstrap.min.css'
+import './index.css'
 import reportWebVitals from './reportWebVitals';
 import {
   createBrowserRouter,
-  RouterProvider, Outlet
+  RouterProvider, Outlet,
+  useLoaderData
 } from "react-router-dom";
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,25 +14,38 @@ import ErrorPage from './pages/ErrorPage';
 import HomePage from './pages/HomePage';
 import GamePage from './pages/GamePage';
 import LoginPage from './pages/LoginPage';
+import LobbyPage from './pages/LobbyPage';
 import ProfilePage from './pages/ProfilePage';
-import { sessionLoader } from './loaders';
-import { Col, Container, Row } from 'react-bootstrap';
+import { sessionLoader, gameLoader, profileLoader } from './loaders';
+import { Container } from 'react-bootstrap';
 import SettingsPage from './pages/SettingsPage';
 import { authAction } from './actions';
+import { ISession } from './types';
 
-const Layout = () => (
-  <Container>
-    <Navbar />
-    <main>
-      <Row className="justify-content-md-center mt-3">
-        <Col md={6} xs={12}>
-          <Outlet />
-        </Col>
-      </Row>
-    </main>
-    <Footer />
-  </Container>
-);
+// Add polyfills
+if (!Array.prototype.at) {
+  Array.prototype.at = function (n) {
+    n = Math.trunc(n) || 0;
+    if (n < 0) n += this.length;
+    if (n < 0 || n >= this.length) return undefined;
+    return this[n];
+  };
+}
+
+const Layout = () => {
+  const session = useLoaderData() as ISession
+  console.log('session')
+  console.log(session)
+  return (
+    <Container fluid style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar session={session} />
+      <main style={{ flex: 1, overflowY: 'auto' }}>
+        <Outlet context={session} />
+      </main>
+      <Footer />
+    </Container>
+  );
+};
 
 const router = createBrowserRouter([
   {
@@ -40,8 +55,9 @@ const router = createBrowserRouter([
     loader: sessionLoader,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'profile/:id', element: <ProfilePage /> },
-      { path: 'game/:id', element: <GamePage /> },
+      { path: 'profile/:id', element: <ProfilePage />, loader: profileLoader },
+      { path: ':gameName/lobby', element: <LobbyPage /> },
+      { path: ':gameName/games/:gameId', element: <GamePage />, loader: gameLoader },
       {
         path: 'login',
         element: <LoginPage />,

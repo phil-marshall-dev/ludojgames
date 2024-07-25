@@ -4,7 +4,7 @@ const Footer = () => {
         <div className="container">
           <div className="row">
             <div className="col text-center">
-                TicTacPro made by{" "}
+                LudojGames made by{" "}
                 <a
                   href="https://philmarshall.dev"
                   target="_blank"

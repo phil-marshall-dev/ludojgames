@@ -1,20 +1,16 @@
 import { Link } from "react-router-dom";
-import { useLoaderData } from 'react-router-dom';
-import { IAxiosErrorResponse, ISession } from '../models';
+import { ISession } from '../types';
 import { Container, Nav, Navbar as BNavbar, NavDropdown } from 'react-bootstrap';
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { logoutAction } from "../actions";
 
-const Navbar: React.FC = () => {
-  const session = useLoaderData() as ISession;
+const Navbar: React.FC<{session: ISession}> = ({session}) => {
   const navigate = useNavigate();
-
   const handleLogout: React.MouseEventHandler<HTMLElement> = async (e) => {
     e.preventDefault();
     const response = await logoutAction()
     if (response.success) {
-      navigate('.');
+      navigate(0);
     } else {
       console.error(response.error);
     }
@@ -43,7 +39,7 @@ const Navbar: React.FC = () => {
   return (
     <BNavbar expand="lg" bg="light" className="navbar-light">
       <Container>
-        <Link to="/" className="navbar-brand">TicTacPro</Link>
+        <Link to="/" className="navbar-brand">LudojGames</Link>
         <BNavbar.Toggle aria-controls="navbarSupportedContent" />
         <BNavbar.Collapse id="navbarSupportedContent">
           {/* Small screens */}

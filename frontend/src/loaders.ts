@@ -1,29 +1,28 @@
 import axios from 'axios';
-import { IAxiosErrorResponse } from './models';
+import { IAxiosErrorResponse } from './types';
+import { LoaderFunction } from 'react-router-dom';
 
-export const sessionLoader = async () => {
+const fetchWithErrorHandling = async (url: string) => {
+    console.log('calling', url)
     try {
-        console.log('getting session')
-        const response = await axios.get('http://localhost:8000/auth/session/', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true
+        const response = await axios.get(url, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true,
         });
-
-        if (response.status === 200) {
-          console.log(response.data)
-          return response.data
-      }
-      } catch (err) {
-        console.log(err)
+        return response.data;
+    } catch (err) {
         const axiosError = err as IAxiosErrorResponse;
-  
-        if (axiosError.response && axiosError.response.data) {
-          console.log(axiosError.response.data.error || 'Session fetch failed');
-        } else {
-          console.log('An error occurred. Please try again later.');
-        }
-      }
-  
+        console.error(axiosError.response?.data?.error || 'An error occurred. Please try again later.');
+    }
 };
+
+export const sessionLoader: LoaderFunction = () => 
+    fetchWithErrorHandling('http://localhost:8000/auth/session/');
+
+export const gameLoader: LoaderFunction = ({ params }) => 
+    fetchWithErrorHandling(`http://localhost:8000/api/games/${params.gameId}`);
+
+export const profileLoader: LoaderFunction = ({ params }) => 
+  fetchWithErrorHandling(`http://localhost:8000/api/profiles/${params.id}`);

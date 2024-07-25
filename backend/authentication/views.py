@@ -1,3 +1,4 @@
+from api.models import Profile
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -11,9 +12,11 @@ def register_view(request):
         username = data.get('username')
         password1 = data.get('password1')
         password2 = data.get('password2')
+        email = data.get('email')
 
         if password1 == password2:
-            user = User.objects.create_user(username=username, password=password1)
+            user = User.objects.create_user(username=username, password=password1, email=email)
+            Profile.objects.create(user=user)
             login(request, user)
             return JsonResponse({'message': 'Registration successful'}, status=201)
         else:

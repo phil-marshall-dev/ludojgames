@@ -5,34 +5,24 @@ const loginAction = async ({ request, formData }: {
   request: Request;
   formData: FormData;
 }) => {
-  console.log('login action begin')
-  console.log('login action begin')
-
   const loginCredentials = {
     username: formData.get('username'),
     password: formData.get('password'),
   };
-  console.log('posting2')
 
   try {
-    console.log('posting3')
     const response = await axios.post('http://localhost:8000/auth/login/', loginCredentials, {
       headers: {
         'Content-Type': 'application/json',
       },
       withCredentials: true,
     });
-    console.log(response.data)
     if (response.status === 200) {
-      console.log('this is running')
-
       return redirect('/');
     } else {
-      console.log('this is running')
       return json({ error: 'Login failed' }, { status: 400 });
     }
   } catch (err) {
-    console.log('second is running')
     return json({ error: 'An error occurred. Please try again later.' }, { status: 500 });
   }
 }

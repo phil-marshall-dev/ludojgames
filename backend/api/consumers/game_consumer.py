@@ -19,34 +19,38 @@ class GameConsumer(LudojConsumer):
         await self.send_existing_moves()
 
     async def handle_move(self, payload):
-        current_time = timezone.now()
-
+        print('hanlding move')
+        # current_time = timezone.now()
+        latest_state = game_redis.get(f"{self.game_id}_latest")
         status = latest_state["status"]
         if status not in ["1", "2"]:
             return
 
-        latest_state = game_redis.get(f"{self.game_id}_latest")
+        
         current_player_user_id = latest_state["players"][status]
         if self.user.id != current_player_user_id:
             return
 
         # Calculate time elapsed since the last move
-        last_move_time = datetime.fromisoformat(latest_state["last_move_time"])
-        elapsed_time = (current_time - last_move_time).total_seconds()
+        # last_move_time = datetime.fromisoformat(latest_state["last_move_time"])
+        # elapsed_time = (current_time - last_move_time).total_seconds()
 
         # Update the clock for the current player
-        clocks = latest_state["clocks"]
-        clocks[status] -= elapsed_time
+        # clocks = latest_state["clocks"]
+        # clocks[status] -= elapsed_time
 
         # Check if the clock has run out
-        if clocks[status] <= 0:
-            await self.end_game("time")
-            return
+        # if clocks[status] <= 0:
+        #     await self.end_game("time")
+        #     return
 
         new_turn = latest_state["turn"] + 1
         success, new_board, new_status = update_board(
             latest_state["board"], payload, status
         )
+
+        print('sccuss is')
+        print(success)
         if not success:
             return
 
@@ -95,7 +99,7 @@ def update_board(board, move, status):
 
     if index is not None:
         # Update the board with the player's marker
-        if board[index] != "":
+        if board[index] != None:
             return False, None, None # Illegal move
         symbol = player_to_symbol.get(status)
         board[index] = symbol

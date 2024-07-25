@@ -54,6 +54,19 @@ export interface IChatMessage {
   createdAt: string;
 }
 
+
+// {
+//   "value": move.value,
+//   "number": move.number,
+//   "player": move.player,
+// }
+
+export interface IGameDetailMove {
+  value: string;
+  number: number;
+  player: '1' | '2';
+}
+
 export interface IGameDetail {
   id: string;
   player_1: IUser;
@@ -62,6 +75,7 @@ export interface IGameDetail {
   createdAt: string;
   inProgress: boolean;
   result: string;
+  moves: IGameDetailMove[]
 }
 
 export type ICellValue = 'X' | 'O' | null;
@@ -80,8 +94,4 @@ export interface IGameState {
 
 export type IGame = {
   gameStateList: IGameState[];
-  // clocks: {
-  //   '1': number;
-  //   '2': number;
-  // };
 }

@@ -5,8 +5,51 @@ import ChatBox from '../components/ChatBox';
 import Board from '../components/Board';
 import MoveHistorySidebar from '../components/MoveHistorySidebar';
 import { useLoaderData, useParams } from 'react-router-dom';
-import { IGame, IGameDetail } from '../types';
+import { ICellValue, IGame, IGameDetail, IGameDetailMove } from '../types';
 
+
+function getPosition(move: string): number {
+  const mapping: { [key: string]: number } = {
+    'A1': 0, 'A2': 1, 'A3': 2,
+    'B1': 3, 'B2': 4, 'B3': 5,
+    'C1': 6, 'C2': 7, 'C3': 8
+  };
+  return mapping[move];
+}
+
+const getGameStateFromMoveList = (moves: IGameDetailMove[]): IGame | null => {
+
+  const game: IGame = { gameStateList: [] }
+  const board: ICellValue[] = Array(9).fill(null);
+
+
+  game.gameStateList.push({
+    board,
+    move: null,
+    turn: 0,
+    status: '1'
+  })
+
+  for (const move of moves) {
+    const position = getPosition(move.value);
+    const marker = move.player === '1' ? 'X' : 'O';
+
+    if (board[position] !== null) {
+      return null
+    }
+
+    board[position] = marker;
+    game.gameStateList.push({
+      board: [...board],
+      move: null,
+      turn: move.number,
+      status: '1'
+    });
+  }
+
+  return game;
+
+}
 const cellMapping: { [key: number]: string } = {
   0: 'A1',
   1: 'A2',
@@ -24,8 +67,8 @@ const GamePage = () => {
   const gameDetail = useLoaderData() as IGameDetail;
   const { gameName, gameId } = useParams();
   const [game, setGame] = useState<IGame>({ gameStateList: [] });
-  console.log('game')
-  console.log(game)
+  const [highlightedMoveIndex, setHighlightedMoveIndex] = useState<number>(game.gameStateList.length - 1);
+
   useEffect(() => {
     if (gameDetail.inProgress) {
       const socket = new WebSocket(`ws://localhost:8000/ws/${gameName}/games/${gameId}/`);
@@ -38,12 +81,17 @@ const GamePage = () => {
 
 
       socket.onmessage = (event) => {
+        console.log('recieving message')
         const data = JSON.parse(event.data);
         const { message, type } = data
+        console.log( { message, type })
 
         if (type === 'existing') {
-          setGame({ gameStateList: message});
+          console.log('setting from exising')
+          setGame({ gameStateList: message });
         } else if (type === 'newState') {
+          console.log('setting from new move')
+
           setGame(prevGame => {
             return { gameStateList: [...prevGame.gameStateList, message] }
           })
@@ -58,7 +106,13 @@ const GamePage = () => {
       };
     } else {
       console.log('not in progress so using api results')
-      console.log(gameDetail)
+      const constructedGame = getGameStateFromMoveList(gameDetail.moves)
+      if (constructedGame) {
+        console.log(
+          'setting constructed game from moves'
+        )
+        setGame(constructedGame)
+      }
     }
   }, [gameDetail.inProgress, gameName, gameId]);
 
@@ -79,7 +133,7 @@ const GamePage = () => {
       width: '100%',
     }}>
       <Col md={3} xs={12}>
-        <MoveHistorySidebar game={game} />
+        <MoveHistorySidebar game={game} highlightedMoveIndex={highlightedMoveIndex} setHighlightedMoveIndex={setHighlightedMoveIndex}/>
       </Col>
       <Col md={6} xs={12} style={{ display: 'flex', height: '100%' }}>
         <Board gameDetail={gameDetail} game={game} handleCellClick={handleCellClick} />

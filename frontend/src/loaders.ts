@@ -3,7 +3,6 @@ import { IAxiosErrorResponse } from './types';
 import { LoaderFunction } from 'react-router-dom';
 
 const fetchWithErrorHandling = async (url: string) => {
-    console.log('calling', url)
     try {
         const response = await axios.get(url, {
             headers: {

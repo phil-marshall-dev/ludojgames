@@ -1,8 +1,6 @@
-from datetime import datetime
 from ..ludoj_redis import LudojRedis
 from .ludoj_consumer import LudojConsumer
 from ..tasks import save_move_to_db, finalize_game
-from django.utils import timezone
 
 game_redis = LudojRedis("game")
 
@@ -19,42 +17,28 @@ class GameConsumer(LudojConsumer):
         await self.send_existing_moves()
 
     async def handle_move(self, payload):
-        print('hanlding move')
-        # current_time = timezone.now()
         latest_state = game_redis.get(f"{self.game_id}_latest")
-        status = latest_state["status"]
+        # check if game is in progress
+        status = latest_state.get("status")
         if status not in ["1", "2"]:
             return
-
         
-        current_player_user_id = latest_state["players"][status]
+        # check if it is player's turn
+        current_player_user_id = latest_state.get("players").get(status)
         if self.user.id != current_player_user_id:
             return
 
-        # Calculate time elapsed since the last move
-        # last_move_time = datetime.fromisoformat(latest_state["last_move_time"])
-        # elapsed_time = (current_time - last_move_time).total_seconds()
-
-        # Update the clock for the current player
-        # clocks = latest_state["clocks"]
-        # clocks[status] -= elapsed_time
-
-        # Check if the clock has run out
-        # if clocks[status] <= 0:
-        #     await self.end_game("time")
-        #     return
-
-        new_turn = latest_state["turn"] + 1
+        # calculate next board state
         success, new_board, new_status = update_board(
             latest_state["board"], payload, status
         )
 
-        print('sccuss is')
-        print(success)
+        # check if move was illegal
         if not success:
             return
 
-
+        # update redis with new state and broadcast
+        new_turn = latest_state["turn"] + 1
         new_state = {
             "board": new_board,
             "move": payload,
@@ -67,14 +51,54 @@ class GameConsumer(LudojConsumer):
         game_redis.set(f"{self.game_id}_{new_turn}", new_state)
         await self.broadcast("newState", new_state)
 
+        # celery saves move to database
         save_move_to_db.delay(self.game_id, payload, new_turn, status)
 
+        # finalize game if over
         if new_status not in ["1", "2"]:
             finalize_game.delay(self.game_id, new_status)
+
+    async def handle_resign(self, payload):
+        latest_state = game_redis.get(f"{self.game_id}_latest")
+        # check if game is in progress
+        status = latest_state.get("status")
+        if status not in ["1", "2"]:
+            return
+        
+        # check if player belongs to this game
+        players = latest_state.get("players")
+        if self.user.id not in players.values():
+            return
+        
+        # get whether player is '1' or '2'
+        for player_key, player_id in players.items():
+            if player_id == self.user.id:
+                user_player_key = player_key
+                break
+
+        new_status = f'{user_player_key}R'
+        
+        # update redis with new state and broadcast
+        new_turn = latest_state["turn"] + 1
+        new_state = {
+            "board": latest_state['board'],
+            "move": None,
+            "turn": new_turn,
+            "players": latest_state["players"],
+            "status": new_status,
+        }
+
+        game_redis.set(f"{self.game_id}_latest", new_state)
+        game_redis.set(f"{self.game_id}_{new_turn}", new_state)
+        await self.broadcast("resignation", new_state)
+
+        # finalize game
+        finalize_game.delay(self.game_id, new_status)
 
     async def send_existing_moves(self):
         keys = game_redis.scan(f"{self.game_id}_*")
         filtered_keys = [key for key in keys if key != f"game:{self.game_id}_latest"]
+        print('keys', filtered_keys)
         values = game_redis.mget(filtered_keys)
         await self.send_message("existing", values)
 
@@ -111,9 +135,7 @@ def update_board(board, move, status):
 
 
 def get_game_status(board, status):
-    # Helper function to check win conditions
     def check_win(symbol):
-        # Winning combinations for a 3x3 board
         winning_combinations = [
             [0, 1, 2],  # Top row
             [3, 4, 5],  # Middle row
@@ -133,7 +155,7 @@ def get_game_status(board, status):
         return "1+"
     elif check_win("O"):
         return "2+"
-    # Check for draw (no empty cells and no winner)
+    # Check for draw
     elif all(cell is not None for cell in board):
         return "D"
     # Game is still in progress

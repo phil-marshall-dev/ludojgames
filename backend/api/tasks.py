@@ -6,7 +6,6 @@ game_redis = LudojRedis("game")
 
 @shared_task
 def save_move_to_db(game_id, move_value, move_number, player):
-    print('saving a move!!!!')
     try:
         move = Move.objects.create(
             value=move_value,
@@ -14,7 +13,6 @@ def save_move_to_db(game_id, move_value, move_number, player):
             number=move_number,
             player=player
         )
-        return f"Move {move_value} saved successfully."
     except Exception as e:
         return f"Error saving move: {str(e)}"
 

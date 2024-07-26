@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
-import { IGameDetail, IGameState, IGameStatus } from '../types';
+import { Card, Row, Col, Button } from 'react-bootstrap';
+import { IGameDetail, IGameStatus, ISession, IUser } from '../types';
 import PlayerTime from './PlayerTime';
+import { Link, useOutletContext } from 'react-router-dom';
+import useGameStore from '../store';
 
-const GameInfo: React.FC<{ gameDetail: IGameDetail, gameState: IGameState | undefined }> = ({ gameDetail, gameState }) => {
+const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> = ({ gameDetail, handleResign  }) => {
+  const session = useOutletContext() as ISession;
+  const game = useGameStore((state) => state.game)
+  const gameState = game.gameStateList.at(-1)
   const { status } = gameState || {}
 
   const gameStatusDescriptions: Record<IGameStatus, string> = {
@@ -11,6 +15,8 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, gameState: IGameState | unde
     '2': 'Player 2 to move',
     '1+': 'Player 1 wins',
     '2+': 'Player 2 wins',
+    '1R': 'Player 1 resigns. Player 2 wins',
+    '2R': 'Player 2 resigns. Player 1 wins',
     'D': 'Draw',
   };
 
@@ -31,7 +37,7 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, gameState: IGameState | unde
     paddingRight: 0,
     paddingLeft: 0,
   };
-  const PlayerCard: React.FC<{ username: string; isX: boolean }> = ({ username }) => {
+  const PlayerCard: React.FC<{ user: IUser; isX: boolean }> = ({ user }) => {
     const moveStartTimeStamp = Date.now()
     const timeOnClockAtStartOfMove = 5 * 60 * 1000;
     return (
@@ -43,7 +49,9 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, gameState: IGameState | unde
             </Col>
             <Col xs={8} className="d-flex flex-column justify-content-center" style={{ position: 'relative' }}>
               <Card.Title className="h5 h-md6" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {username}
+                <Link to={`/profile/${user.id}`}>
+                {user.username}
+                </Link>
               </Card.Title>
               <Card.Subtitle className="text-muted h6">
                 <PlayerTime moveStartTimeStamp={moveStartTimeStamp} timeOnClockAtStartOfMove={timeOnClockAtStartOfMove} playersTurn={false} />
@@ -70,12 +78,14 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, gameState: IGameState | unde
     <div className="text-center">
       <Row className="mb-3">
         <Col xs={6} className="d-flex">
-          <PlayerCard username={gameDetail.player_1.username} isX={true} />
+          <PlayerCard user={gameDetail.player_1} isX={true} />
         </Col>
         <Col xs={6} className="d-flex">
-          <PlayerCard username={gameDetail.player_2.username} isX={false} />
+          <PlayerCard user={gameDetail.player_2} isX={false} />
         </Col>
         <GameStatus />
+        { ((session.userId === gameDetail.player_1.id) || (session.userId === gameDetail.player_2.id)) ? 
+        <Button onClick={handleResign}>Resign</Button> : null }
       </Row>
     </div>
   );

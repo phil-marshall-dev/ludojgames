@@ -1,7 +1,7 @@
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { IChallenge, ISession } from "../types";
 import { useEffect, useState } from "react";
-import { Col, Row } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 import ChallengesTable from "../components/ChallengesTable";
 
 const LobbyPage: React.FC = () => {
@@ -52,7 +52,7 @@ const LobbyPage: React.FC = () => {
         <Col md={6} xs={12}>
             <div>
                 <h2>Existing Challenges</h2>
-                {session.userId ? <button onClick={createChallenge}>Create Challenge</button> : null}
+                {session.userId ? <Button onClick={createChallenge}>Create Challenge</Button> : null}
                 <ChallengesTable challenges={challenges} socket={socket} />
             </div>
         </Col>

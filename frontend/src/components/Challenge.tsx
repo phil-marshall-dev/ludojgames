@@ -13,7 +13,6 @@ export const Challenge: React.FC<{ challenge: IChallenge, session: ISession | nu
     const handleDelete = async () => {
         socket?.send(JSON.stringify({ action: 'delete', payload: {id: challenge.id }}));
     }; 
-    console.log('session', session)
 
     return (
         <tr>

@@ -17,9 +17,9 @@ class LobbyConsumer(LudojConsumer):
         self.group_name = f"{self.game_name}_lobby"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-        # TODO REPLAVCE IWTH SCAN
-        existing_challenges = challenge_redis.get_all()
-        await self.send_message("existing", existing_challenges)
+        keys = challenge_redis.scan("*")
+        values = challenge_redis.mget(keys)
+        await self.send_message("existing", values)
 
     async def handle_create(self, payload):
         id = str(uuid.uuid4())

@@ -1,34 +1,27 @@
 import React, { useState } from 'react';
 import { IGame } from "../types";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { Button } from 'react-bootstrap';
+import useGameStore from '../store';
 
-interface MoveHistorySidebarProps {
-  game: IGame
-  highlightedMoveIndex: number;
-  setHighlightedMoveIndex: React.Dispatch<React.SetStateAction<number>>;
-}
+const MoveHistorySidebar: React.FC = () => {
+    const highlightedMoveIndex = useGameStore((state) => state.highlightedMoveIndex)
+    const game = useGameStore((state) => state.game)
+    const moveToPrevious = useGameStore((state) => state.moveToPrevious)
+    const moveToNext = useGameStore((state) => state.moveToNext)
+    const setHighlightedMoveIndex= useGameStore((state) => state.setHighlightedMoveIndex)
 
-const MoveHistorySidebar: React.FC<MoveHistorySidebarProps> = ({ game, highlightedMoveIndex, setHighlightedMoveIndex }) => {
     const { gameStateList } = game;
 
-    const goToPreviousMove = () => {
-      if (highlightedMoveIndex > 0) {
-          setHighlightedMoveIndex(highlightedMoveIndex - 1);
-      }
-  };
-
-  const goToNextMove = () => {
-      if (highlightedMoveIndex < game.gameStateList.length - 1) {
-          setHighlightedMoveIndex(highlightedMoveIndex + 1);
-      }
-  };
     return (
         <div>
-            <button onClick={goToPreviousMove} disabled={highlightedMoveIndex === 0}>
-                Previous
-            </button>
-            <button onClick={goToNextMove} disabled={highlightedMoveIndex === gameStateList.length - 1}>
-                Next
-            </button>
+            <Button onClick={moveToPrevious} disabled={highlightedMoveIndex === 0}>
+            <FontAwesomeIcon icon={faChevronLeft} />
+            </Button>
+            <Button onClick={moveToNext} disabled={highlightedMoveIndex === gameStateList.length - 1}>
+            <FontAwesomeIcon icon={faChevronRight} />
+            </Button>
             <table>
                 <thead>
                     <tr>
@@ -38,13 +31,18 @@ const MoveHistorySidebar: React.FC<MoveHistorySidebarProps> = ({ game, highlight
                     </tr>
                 </thead>
                 <tbody>
-                    {gameStateList.map((state, index) => (
-                        <tr key={index} style={{ backgroundColor: index === highlightedMoveIndex ? 'yellow' : 'transparent' }}>
-                            <td>{state.turn}</td>
-                            <td>{state.move}</td>
-                            {/* Add more cells if needed */}
-                        </tr>
-                    ))}
+                    {gameStateList.map((state, index) => {
+                        if (index > 0 && state.status != '1R' && state.status != '2R') {
+                        return (
+                            <tr key={index} style={{ backgroundColor: index === highlightedMoveIndex ? 'LightGray' : 'transparent' }}>
+                                <td>{state.turn}</td>
+                                <td onClick={() => setHighlightedMoveIndex(index)}>{state.move}</td>
+                                {/* Add more cells if needed */}
+                            </tr>
+                        )} else {
+                            return null
+                        }
+                    })}
                 </tbody>
             </table>
         </div>

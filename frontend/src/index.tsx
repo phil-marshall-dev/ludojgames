@@ -34,8 +34,6 @@ if (!Array.prototype.at) {
 
 const Layout = () => {
   const session = useLoaderData() as ISession
-  console.log('session')
-  console.log(session)
   return (
     <Container fluid style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar session={session} />

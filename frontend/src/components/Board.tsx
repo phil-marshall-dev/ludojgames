@@ -1,14 +1,16 @@
 import React from 'react';
-import { IGame, IGameDetail } from '../types';
+import { IGameDetail } from '../types';
+import useGameStore from '../store';
 
 interface BoardProps {
   gameDetail: IGameDetail;
-  game: IGame;
   handleCellClick: (index: number) => void;
 }
 
-const Board: React.FC<BoardProps> = ({ gameDetail, game, handleCellClick }) => {
-  const currentBoard = game.gameStateList.at(-1)?.board
+const Board: React.FC<BoardProps> = ({ gameDetail, handleCellClick }) => {
+  const game = useGameStore((state) => state.game)
+  const highlightedMoveIndex = useGameStore((state) => state.highlightedMoveIndex)
+  const board = game.gameStateList.at(highlightedMoveIndex)?.board
   const cellSize = 100;  // Use larger units for cell size
   const boardSize = cellSize * 3;  // 3x3 grid
   const radius = cellSize / 4;     // Radius for the circle representing 'O'
@@ -31,7 +33,7 @@ const Board: React.FC<BoardProps> = ({ gameDetail, game, handleCellClick }) => {
       <line x1={0} y1={cellSize * 2} x2={boardSize} y2={cellSize * 2} stroke="black" strokeWidth={strokeWidth} />
 
       {/* Draw the Xs and Os and the clickable areas */}
-      {currentBoard?.map((cell, index) => {
+      {board?.map((cell, index) => {
         const { x, y } = getCellCenter(index);
 
         return (

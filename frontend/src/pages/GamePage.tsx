@@ -7,7 +7,7 @@ import MoveHistorySidebar from '../components/MoveHistorySidebar';
 import { useLoaderData, useParams } from 'react-router-dom';
 import { IGameDetail, } from '../types';
 import useGameStore from '../store';
-import { getGameStateFromMoveList, cellMapping } from '../gameLogic/tictactoe'
+import { getGameStatesFromMoveList, cellMapping } from '../gameLogic/tictactoe'
 const pageStyle: React.CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -26,6 +26,8 @@ const GamePage = () => {
   const resetGame = useGameStore((state) => state.resetGame);
   const setGameFromRedisExistingMovesOrConstructedGame = useGameStore((state => state.setGameFromRedisExistingMovesOrConstructedGame))
   const setGameFromNewMove = useGameStore((state) => state.setGameFromNewMove)
+  const setGameResigned = useGameStore((state) => state.setGameResigned)
+
   useEffect(() => {
     if (gameDetail.inProgress) {
       const socket = new WebSocket(`ws://localhost:8000/ws/${gameName}/games/${gameId}/`);
@@ -33,9 +35,13 @@ const GamePage = () => {
         const data = JSON.parse(event.data);
         const { message, type } = data;
         if (type === 'existing') {
+          console.log('got existing')
+          console.log(message)
             setGameFromRedisExistingMovesOrConstructedGame(message)
         } else if (type === 'newState') {
             setGameFromNewMove(message)
+        } else if (type === 'resignation') {
+          setGameResigned(message)
         }
     };
 
@@ -47,9 +53,9 @@ const GamePage = () => {
         resetGame();
       };
     } else {
-      const constructedGame = getGameStateFromMoveList(gameDetail.moves)
+      const constructedGame = getGameStatesFromMoveList(gameDetail)
       if (constructedGame) {
-        setGameFromRedisExistingMovesOrConstructedGame(constructedGame.gameStateList)
+        setGameFromRedisExistingMovesOrConstructedGame(constructedGame)
       }
       return () => {
         resetGame();

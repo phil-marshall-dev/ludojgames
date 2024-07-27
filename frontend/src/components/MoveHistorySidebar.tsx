@@ -32,10 +32,10 @@ const MoveHistorySidebar: React.FC = () => {
                 </thead>
                 <tbody>
                     {gameStateList.map((state, index) => {
-                        if (index > 0 && state.status != '1R' && state.status != '2R') {
+                        if (index > 0) {
                         return (
                             <tr key={index} style={{ backgroundColor: index === highlightedMoveIndex ? 'LightGray' : 'transparent' }}>
-                                <td>{state.turn}</td>
+                                <td>{state.turnNumber}</td>
                                 <td onClick={() => setHighlightedMoveIndex(index)}>{state.move}</td>
                                 {/* Add more cells if needed */}
                             </tr>

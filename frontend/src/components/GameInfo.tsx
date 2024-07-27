@@ -1,25 +1,15 @@
 import { Card, Row, Col, Button } from 'react-bootstrap';
-import { IGameDetail, IGameStatus, ISession, IUser } from '../types';
+import { IGameDetail, IGameResult, ISession, IUser } from '../types';
 import PlayerTime from './PlayerTime';
 import { Link, useOutletContext } from 'react-router-dom';
 import useGameStore from '../store';
 
-const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> = ({ gameDetail, handleResign  }) => {
+const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> = ({ gameDetail, handleResign }) => {
   const session = useOutletContext() as ISession;
   const game = useGameStore((state) => state.game)
   const gameState = game.gameStateList.at(-1)
-  const { status } = gameState || {}
-
-  const gameStatusDescriptions: Record<IGameStatus, string> = {
-    '1': 'Player 1 to move',
-    '2': 'Player 2 to move',
-    '1+': 'Player 1 wins',
-    '2+': 'Player 2 wins',
-    '1R': 'Player 1 resigns. Player 2 wins',
-    '2R': 'Player 2 resigns. Player 1 wins',
-    'D': 'Draw',
-  };
-
+  const { result } = game
+  const { whoseTurn } = gameState || {}
 
   const avatarStyle: React.CSSProperties = {
     width: '100%',
@@ -50,7 +40,7 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> 
             <Col xs={8} className="d-flex flex-column justify-content-center" style={{ position: 'relative' }}>
               <Card.Title className="h5 h-md6" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 <Link to={`/profile/${user.id}`}>
-                {user.username}
+                  {user.username}
                 </Link>
               </Card.Title>
               <Card.Subtitle className="text-muted h6">
@@ -65,7 +55,25 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> 
   }
 
   const GameStatus: React.FC = () => {
-    const text = status ? gameStatusDescriptions[status] : 'An error occured'
+    let text;
+    if (result) {
+      const mapping = {
+        '1+': 'Player 1 wins',
+        '2+': 'Player 2 wins',
+        '1R': 'Player 1 resigns. Player 2 wins',
+        '2R': 'Player 2 resigns. Player 1 wins',
+        'D': 'Draw',
+      }
+      text = mapping[result]
+    } else {
+      if (whoseTurn) {
+        const mapping = {
+          '1': "Player 1's turn",
+          '2': "Player 2's turn",
+        }
+        text = mapping[whoseTurn]
+      }
+    }
 
     return (
       <div>
@@ -84,8 +92,8 @@ const GameInfo: React.FC<{ gameDetail: IGameDetail, handleResign: () => void }> 
           <PlayerCard user={gameDetail.player_2} isX={false} />
         </Col>
         <GameStatus />
-        { ((session.userId === gameDetail.player_1.id) || (session.userId === gameDetail.player_2.id)) ? 
-        <Button onClick={handleResign}>Resign</Button> : null }
+        {((session.userId === gameDetail.player_1.id) || (session.userId === gameDetail.player_2.id)) ?
+          <Button onClick={handleResign}>Resign</Button> : null}
       </Row>
     </div>
   );

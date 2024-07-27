@@ -58,6 +58,15 @@ export interface IGameDetailMove {
   player: '1' | '2';
 }
 
+
+export type ICellValue = 'X' | 'O' | null;
+
+export type IMove = 'A1' | 'A2' | 'A3' | 'B1' | 'B2' | 'B3' | 'C1' | 'C2' | 'C3' | null;
+
+export type IWhoseTurn = '1' | '2' | null
+
+export type IGameResult = '1+' | '2+' | '1R' | '2R' | 'D' | null
+
 export interface IGameDetail {
   id: string;
   player_1: IUser;
@@ -65,26 +74,19 @@ export interface IGameDetail {
   creator: IUser;
   createdAt: string;
   inProgress: boolean;
-  result: string;
+  result: IGameResult;
   moves: IGameDetailMove[]
 }
-
-export type ICellValue = 'X' | 'O' | null;
-
-export type IMove = 'A1' | 'A2' | 'A3' | 'B1' | 'B2' | 'B3' | 'C1' | 'C2' | 'C3' | null;
-
-export type IGameStatus = '1' | '2' | '1+' | '2+' | '1R' | '2R' | 'D';
-
-export type IGameResult = '1+' | '2+' | '1R' | '2R' | 'D'
 
 export interface IGameState {
   board: ICellValue[];
   move: IMove;
-  turn: number;
-  status: IGameStatus;
+  turnNumber: number;
+  whoseTurn: IWhoseTurn;
+  result: IGameResult;
 } 
 
 export type IGame = {
   gameStateList: IGameState[];
-  gameResult: IGameResult;
+  result: IGameResult;
 }

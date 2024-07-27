@@ -1,4 +1,4 @@
-from backend.api.ludoj_redis import LudojRedis
+from backend.api.redis_client import LudojRedis
 from ..models import Game
 
 game_redis = LudojRedis('game')

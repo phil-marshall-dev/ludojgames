@@ -83,7 +83,6 @@ export interface IGameState {
   move: IMove;
   turnNumber: number;
   whoseTurn: IWhoseTurn;
-  result: IGameResult;
 } 
 
 export type IGame = {

@@ -1,10 +1,11 @@
-from ..types import GameState
+from ..types import GameStateRedis
 from ..redis_client import GameRedis
 from .ludoj_consumer import LudojConsumer
 from ..tasks import save_move_to_db, finalize_game
-from dataclasses import  asdict
+from dataclasses import asdict
 
 game_redis = GameRedis()
+
 
 class GameConsumer(LudojConsumer):
     async def connect(self):
@@ -18,18 +19,23 @@ class GameConsumer(LudojConsumer):
         await self.send_existing_moves()
 
     async def handle_move(self, payload):
-        latest_state = game_redis.get_latest_game_state(self.game_id)
+        latest_game_state, game_info = game_redis.get_latest_game_state_and_info(
+            self.game_id
+        )
         # check if game is in progress
-        if latest_state.result:
+        if not latest_game_state or not game_info:
             return
-        
+
+        if game_info.result:
+            return
+
         # check if it is player's turn
-        if self.user.id != latest_state.current_player_id():
+        if self.user.id != latest_game_state.current_player_id(game_info):
             return
 
         # calculate next state
         success, new_board, new_result, new_whoseTurn = update_board(
-            latest_state.board, payload, latest_state.whoseTurn
+            latest_game_state.board, payload, latest_game_state.whoseTurn
         )
 
         # check if move was illegal
@@ -37,29 +43,68 @@ class GameConsumer(LudojConsumer):
             return
 
         # update redis with new state and broadcast
-        new_turn = latest_state.turnNumber + 1
-        new_state = GameState(
-            latest_state.player_1_id,
-            latest_state.player_2_id,
+        new_turn = latest_game_state.turnNumber + 1
+        new_state = GameStateRedis(
             board=new_board,
             move=payload,
             turnNumber=new_turn,
             whoseTurn=new_whoseTurn,
-            result=new_result
         )
         game_redis.store_game_state(new_state, self.game_id)
-        await self.broadcast("newState", asdict(new_state))
+        await self.broadcast(
+            "newState", {"gameState": asdict(new_state), "result": new_result}
+        )
 
         # celery saves move to database
         save_move_to_db.delay(self.game_id, payload, new_turn, new_whoseTurn)
 
         # finalize game if over
         if new_result:
+            game_info.result = new_result
+            game_redis.store_game_info(game_info, self.game_id)
             finalize_game.delay(self.game_id, new_result)
 
     async def send_existing_moves(self):
-        game_states = game_redis.get_game_states(self.game_id)
-        await self.send_message("existing", [asdict(game_state) for game_state in game_states])
+        game_states, game_info = game_redis.get_game_states_and_info(self.game_id)
+        await self.send_message(
+            "existing",
+            {
+                "gameStateList": [asdict(game_state) for game_state in game_states],
+                "result": game_info.result,
+            },
+        )
+
+    # async def handle_resign(self, payload):
+    #     latest_state = game_redis.get_latest_game_state(self.game_id)
+    #     # check if game is in progress
+    #     if not latest_state or latest_state.result:
+    #         return
+
+    #     # check if player belongs to this game
+    #     if self.user.id not in [latest_state.player_1_id, latest_state.player_2_id]:
+    #         return
+
+    #     result = '1R' if self.user.id == latest_state.player_1_id else '2R'
+
+    #     # update redis with new state and broadcast
+    #     new_state = GameStateRedis(latest_state.player_1_id, latest_state.player_2_id,board=latest_state.board,move=None,)
+
+    #     game_redis.store_game_state(new_state, self.game_id)
+    #     await self.broadcast("newState", asdict(new_state))
+
+    #     # celery saves move to database
+    #     save_move_to_db.delay(self.game_id, payload, new_turn, new_whoseTurn)
+
+    #     # finalize game if over
+    #     if new_result:
+    #         finalize_game.delay(self.game_id, new_result)
+    # player_1_id: int
+    # player_2_id: int
+    # board: List[Optional[int]] = field(default_factory=lambda: [None] * 9)
+    # move: Optional[Literal['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']] = None
+    # turnNumber: int = 0
+    # whoseTurn: Optional[Literal['1', '2']] = "1"
+    # result: Optional[Literal['1+', '2+', '1R', '2R', 'D']] = None
 
 
 def update_board(board, move, whoseTurn):
@@ -83,7 +128,7 @@ def update_board(board, move, whoseTurn):
     if index is not None:
         # Update the board with the player's marker
         if board[index] != None:
-            return False, None, None, None # Illegal move
+            return False, None, None, None  # Illegal move
         symbol = player_to_symbol.get(whoseTurn)
         board[index] = symbol
 
@@ -91,7 +136,7 @@ def update_board(board, move, whoseTurn):
     new_result = get_game_result(board)
     new_whoseTurn = None
     if not new_result:
-        new_whoseTurn = '1' if whoseTurn == '2' else '2'
+        new_whoseTurn = "1" if whoseTurn == "2" else "2"
 
     return True, board, new_result, new_whoseTurn
 
@@ -123,43 +168,3 @@ def get_game_result(board):
     # Game is still in progress
     else:
         return None
-
-
-
-
-    # async def handle_resign(self, payload):
-    #     latest_state = game_redis.get(f"{self.game_id}_latest")
-    #     # check if game is in progress
-    #     status = latest_state.get("status")
-    #     if status not in ["1", "2"]:
-    #         return
-        
-    #     # check if player belongs to this game
-    #     players = latest_state.get("players")
-    #     if self.user.id not in players.values():
-    #         return
-        
-    #     # get whether player is '1' or '2'
-    #     for player_key, player_id in players.items():
-    #         if player_id == self.user.id:
-    #             user_player_key = player_key
-    #             break
-
-    #     new_status = f'{user_player_key}R'
-        
-    #     # update redis with new state and broadcast
-    #     new_turn = latest_state["turn"] + 1
-    #     new_state = {
-    #         "board": latest_state['board'],
-    #         "move": None,
-    #         "turn": new_turn,
-    #         "players": latest_state["players"],
-    #         "status": new_status,
-    #     }
-
-    #     game_redis.set(f"{self.game_id}_latest", new_state)
-    #     game_redis.set(f"{self.game_id}_{new_turn}", new_state)
-    #     await self.broadcast("resignation", new_state)
-
-    #     # finalize game
-    #     finalize_game.delay(self.game_id, new_status)

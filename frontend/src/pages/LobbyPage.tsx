@@ -55,6 +55,9 @@ const LobbyPage: React.FC = () => {
                 {session.userId ? <Button onClick={createChallenge}>Create Challenge</Button> : null}
                 <ChallengesTable challenges={challenges} socket={socket} />
             </div>
+            <div>
+                <Button>Play vs the computer</Button>
+            </div>
         </Col>
     </Row>
     );

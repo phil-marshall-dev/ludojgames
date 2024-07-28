@@ -9,8 +9,8 @@ interface BoardProps {
 
 const Board: React.FC<BoardProps> = ({ gameDetail, handleCellClick }) => {
   const game = useGameStore((state) => state.game)
-  const highlightedMoveIndex = useGameStore((state) => state.highlightedMoveIndex)
-  const board = game.gameStateList.at(highlightedMoveIndex)?.board
+  const displayedMoveIndex = useGameStore((state) => state.displayedMoveIndex)
+  const board = game.gameStateList.at(displayedMoveIndex)?.board
   const cellSize = 100;  // Use larger units for cell size
   const boardSize = cellSize * 3;  // 3x3 grid
   const radius = cellSize / 4;     // Radius for the circle representing 'O'

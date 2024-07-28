@@ -1,5 +1,5 @@
 from channels.db import database_sync_to_async
-from ..types import GameState
+from ..types import GameInfoRedis, GameStateRedis
 from .ludoj_consumer import LudojConsumer
 from ..redis_client import ChallengeRedis, GameRedis
 from ..models import Game, GameType
@@ -59,6 +59,8 @@ class LobbyConsumer(LudojConsumer):
             player_2_id=acceptee_id,
             game_type=GameType.get_value(self.game_name),
         )
-        initial_state = GameState(creator_id, acceptee_id)
+        initial_state = GameStateRedis()
+        game_info = GameInfoRedis(creator_id, acceptee_id)
         game_redis.store_game_state(initial_state, game.id)
+        game_redis.store_game_info(game_info, game.id)
         return game

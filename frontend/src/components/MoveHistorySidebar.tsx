@@ -6,7 +6,7 @@ import { Button } from 'react-bootstrap';
 import useGameStore from '../store';
 
 const MoveHistorySidebar: React.FC = () => {
-    const highlightedMoveIndex = useGameStore((state) => state.highlightedMoveIndex)
+    const displayedMoveIndex = useGameStore((state) => state.displayedMoveIndex)
     const game = useGameStore((state) => state.game)
     const moveToPrevious = useGameStore((state) => state.moveToPrevious)
     const moveToNext = useGameStore((state) => state.moveToNext)
@@ -16,10 +16,10 @@ const MoveHistorySidebar: React.FC = () => {
 
     return (
         <div>
-            <Button onClick={moveToPrevious} disabled={highlightedMoveIndex === 0}>
+            <Button onClick={moveToPrevious} disabled={displayedMoveIndex === 0}>
             <FontAwesomeIcon icon={faChevronLeft} />
             </Button>
-            <Button onClick={moveToNext} disabled={highlightedMoveIndex === gameStateList.length - 1}>
+            <Button onClick={moveToNext} disabled={displayedMoveIndex === gameStateList.length - 1}>
             <FontAwesomeIcon icon={faChevronRight} />
             </Button>
             <table>
@@ -34,7 +34,7 @@ const MoveHistorySidebar: React.FC = () => {
                     {gameStateList.map((state, index) => {
                         if (index > 0) {
                         return (
-                            <tr key={index} style={{ backgroundColor: index === highlightedMoveIndex ? 'LightGray' : 'transparent' }}>
+                            <tr key={index} style={{ backgroundColor: index === displayedMoveIndex ? 'LightGray' : 'transparent' }}>
                                 <td>{state.turnNumber}</td>
                                 <td onClick={() => setHighlightedMoveIndex(index)}>{state.move}</td>
                                 {/* Add more cells if needed */}

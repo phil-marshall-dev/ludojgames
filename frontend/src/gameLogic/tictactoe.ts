@@ -37,7 +37,7 @@ const getStatus = (board: ICellValue[], player: '1' | '2') => {
   return player === '1' ? '2' : '1';
 };
 
-const getGameStatesFromMoveList = (gameDetail: IGameDetail): IGameState[] | null => {
+const getGameStatesFromMoveList = (gameDetail: IGameDetail): IGame | null => {
   const board: ICellValue[] = Array(9).fill(null);
   const gameStateList: IGameState[] = [];
   gameStateList.push({
@@ -45,7 +45,6 @@ const getGameStatesFromMoveList = (gameDetail: IGameDetail): IGameState[] | null
     move: null,
     turnNumber: 0,
     whoseTurn: '1',
-    result: null,
   })
   for (const move of gameDetail.moves) {
     const position = getPosition(move.value);
@@ -63,10 +62,9 @@ const getGameStatesFromMoveList = (gameDetail: IGameDetail): IGameState[] | null
       move: move.value as IMove,
       turnNumber: move.number,
       whoseTurn: nextStatus,
-      result: null,
     });
   }
-  return gameStateList;
+  return {gameStateList, result: gameDetail.result};
 }
 
 const cellMapping: { [key: number]: string } = {

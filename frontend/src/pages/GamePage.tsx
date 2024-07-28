@@ -35,8 +35,6 @@ const GamePage = () => {
         const data = JSON.parse(event.data);
         const { message, type } = data;
         if (type === 'existing') {
-          console.log('got existing')
-          console.log(message)
             setGameFromRedisExistingMovesOrConstructedGame(message)
         } else if (type === 'newState') {
             setGameFromNewMove(message)
@@ -44,7 +42,6 @@ const GamePage = () => {
           setGameResigned(message)
         }
     };
-
 
       setWs(socket);
 
@@ -84,7 +81,9 @@ const GamePage = () => {
         <MoveHistorySidebar />
       </Col>
       <Col md={6} xs={12} style={{ display: 'flex', height: '100%' }}>
-        <Board gameDetail={gameDetail} handleCellClick={handleCellClick} />
+        <div className="d-flex p-3">
+          <Board gameDetail={gameDetail} handleCellClick={handleCellClick} />
+        </div>
       </Col>
       <Col md={3} xs={12} className="text-center ms-auto">
         <GameInfo gameDetail={gameDetail} handleResign={handleResign} />

@@ -1,16 +1,14 @@
 import { create } from 'zustand';
-import { IGame, IGameState } from './types';
+import { IGame, IGameResult, IGameState } from './types';
 const sortByTurn = (gameStateList: IGameState[]) => {
-  console.log('state list is')
-  console.log(gameStateList)
   return gameStateList.slice().sort((a, b) => a.turnNumber - b.turnNumber);
 };
 
 interface GameState {
   game: IGame;
-  highlightedMoveIndex: number;
-  setGameFromRedisExistingMovesOrConstructedGame: (message: IGameState[]) => void;
-  setGameFromNewMove: (gameState: IGameState) => void;
+  displayedMoveIndex: number;
+  setGameFromRedisExistingMovesOrConstructedGame: (message: IGame) => void;
+  setGameFromNewMove: (params: { gameState: IGameState; result: IGameResult }) => void;
   moveToPrevious: () => void;
   moveToNext: () => void;
   setHighlightedMoveIndex: (index: number) => void;
@@ -20,29 +18,30 @@ interface GameState {
 
 const useGameStore = create<GameState>((set) => ({
   game: { gameStateList: [], result: null },
-  highlightedMoveIndex: 0,
-  setGameFromRedisExistingMovesOrConstructedGame: (message: IGameState[]) => {
-    const lastGameState = message.at(-1)
-    const result = lastGameState ? lastGameState.result : null
+  displayedMoveIndex: 0,
+  setGameFromRedisExistingMovesOrConstructedGame: (message: IGame) => {
     set({
-      game: { gameStateList: sortByTurn(message), result },
-      highlightedMoveIndex: message.length - 1
+      game: {
+        gameStateList: sortByTurn(message.gameStateList),
+        result: message.result
+      },
+      displayedMoveIndex: message.gameStateList.length - 1
     })
   },
-  setGameFromNewMove: (gameState: IGameState) => {
+  setGameFromNewMove: ({gameState, result}) => {
     set((state) => {
-      const updatedGameStateList = [...state.game.gameStateList, gameState]
+      const updatedGameStateList = sortByTurn([...state.game.gameStateList, gameState])
       return {
-        game: { gameStateList: updatedGameStateList, result: gameState.result },
-        highlightedMoveIndex: updatedGameStateList.length - 1,
+        game: { gameStateList: updatedGameStateList, result },
+        displayedMoveIndex: updatedGameStateList.length - 1,
       }
     })
   },
   moveToPrevious: () => {
     set((state) => {
-      if (state.highlightedMoveIndex > 0) {
+      if (state.displayedMoveIndex > 0) {
         return {
-          highlightedMoveIndex: state.highlightedMoveIndex - 1
+          displayedMoveIndex: state.displayedMoveIndex - 1
         }
       } else {
         return {}
@@ -51,9 +50,9 @@ const useGameStore = create<GameState>((set) => ({
   },
   moveToNext: () => {
     set((state) => {
-      if (state.highlightedMoveIndex < state.game.gameStateList.length - 1) {
+      if (state.displayedMoveIndex < state.game.gameStateList.length - 1) {
         return {
-          highlightedMoveIndex: state.highlightedMoveIndex + 1
+          displayedMoveIndex: state.displayedMoveIndex + 1
         }
       } else {
         return {}
@@ -65,7 +64,7 @@ const useGameStore = create<GameState>((set) => ({
       const { length } = state.game.gameStateList
       if (index >= 0 && index < length) {
 
-        return { highlightedMoveIndex: index }
+        return { displayedMoveIndex: index }
       } else {
         return {}
       }
@@ -75,7 +74,7 @@ const useGameStore = create<GameState>((set) => ({
   resetGame: () => {
     set({
       game: { gameStateList: [], result: null },
-      highlightedMoveIndex: 0,
+      displayedMoveIndex: 0,
     })
   },
   setGameResigned: (resigningPlayer) => {

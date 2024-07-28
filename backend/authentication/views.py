@@ -34,7 +34,6 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            print('logging in ', user)
             login(request, user)
             return JsonResponse({'message': 'Login successful!'}, status=200)
         else:
@@ -47,7 +46,6 @@ def login_view(request):
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
-        print("User logged out:", request.user)  # Log the user
         return JsonResponse({'message': 'Logout successful!'}, status=200)
 
     return JsonResponse({'error': 'Invalid method'}, status=400)
@@ -55,7 +53,6 @@ def logout_view(request):
 @csrf_exempt
 def session_view(request):
     if request.method == 'GET':
-        print("User session for:", request.user)
         session_data = {
             'isAuthenticated': request.user.is_authenticated,
             'username': request.user.username if request.user.is_authenticated else '',

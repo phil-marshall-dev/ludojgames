@@ -64,7 +64,6 @@ class GameRedis:
         self.redis_client.set(f"game:{game_id}_latest", value)
 
     def store_game_info(self, game_info: GameInfoRedis, game_id: int):
-        print()
         value = json.dumps(game_info.__dict__)
         self.redis_client.set(f"game:{game_id}_info", value)
 
@@ -87,18 +86,12 @@ class GameRedis:
     ) -> Tuple[Optional[List[GameStateRedis]], Optional[GameInfoRedis]]:
         info_key = f"game:{game_id}_info"
         game_state_keys = list(self.redis_client.scan_iter(match=f"game:{game_id}_*"))
-        print(
-            'keys from redis', game_state_keys
-        )
         game_state_keys = [
             key
             for key in game_state_keys
             if (key != f"game:{game_id}_latest".encode('utf-8') and key != f"game:{game_id}_info".encode('utf-8'))
         ]
-        print('filtered keys', game_state_keys)
         keys = [info_key] + game_state_keys
-        print('actual keys')
-        print(keys)
         values = self.redis_client.mget(keys)
         game_info_value = values[0]
         game_info = None
@@ -109,8 +102,6 @@ class GameRedis:
             return None, None
 
         game_states = []
-        print(values)
-        print("that was it")
         for value in values[1:]:
             if value:
                 game_state_data = json.loads(value)

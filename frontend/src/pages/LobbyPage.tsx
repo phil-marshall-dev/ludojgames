@@ -10,7 +10,7 @@ const LobbyPage: React.FC = () => {
     const session = useOutletContext() as ISession;
     const [challenges, setChallenges] = useState<IChallenge[]>([]);
     const [socket, setSocket] = useState<WebSocket | null>(null);
-
+    const hasChallenge = challenges.some(challenge => challenge.userId === session.userId);
     useEffect(() => {
         const newSocket = new WebSocket(`ws://localhost:8000/ws/${gameName}/lobby/`);
         setSocket(newSocket);
@@ -52,7 +52,11 @@ const LobbyPage: React.FC = () => {
         <Col md={6} xs={12}>
             <div>
                 <h2>Existing Challenges</h2>
-                {session.userId ? <Button onClick={createChallenge}>Create Challenge</Button> : null}
+                {session.userId ?
+                    (hasChallenge ?
+                        "Waiting for opponent..."
+                        : <Button onClick={createChallenge}>Create Challenge</Button>)
+                    : null}
                 <ChallengesTable challenges={challenges} socket={socket} />
             </div>
             <div>

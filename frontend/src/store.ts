@@ -78,7 +78,14 @@ const useGameStore = create<GameState>((set) => ({
     })
   },
   setGameResigned: (resigningPlayer) => {
-
+    set((state) => {
+      return {
+        game: {
+          gameStateList: state.game.gameStateList,
+          result: resigningPlayer
+        }
+      }
+    })
   }
 }))
 

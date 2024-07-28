@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass, field
 from typing import List, Optional, Literal
 from typing import Literal, Optional, List
@@ -11,6 +10,10 @@ from django.utils import timezone
 class GameInfoRedis:
     player_1_id: int
     player_2_id: int
+    player_1_computer: bool = False
+    player_2_computer: bool = False
+    player_1_time_ms: int = 0
+    player_2_time_ms: int = 0
     result: Optional[Literal['1+', '2+', '1R', '2R', 'D']] = None
 
 @dataclass
